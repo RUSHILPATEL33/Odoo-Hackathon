@@ -29,6 +29,7 @@ import {
   Loader2,
   Clock,
   Plane,
+  BarChart2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -481,6 +482,16 @@ export default function TripDetailPage() {
             </div>
           </div>
 
+          {/* Action buttons */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              id="budget-btn"
+              onClick={() => navigate(`/trips/${tripId}/budget`)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all text-sm font-medium"
+            >
+              <BarChart2 className="w-4 h-4" /> Budget
+            </button>
+
           {/* Sync banner */}
           <AnimatePresence>
             {hasDraft && (
@@ -488,7 +499,7 @@ export default function TripDetailPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm flex-shrink-0"
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm"
               >
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                 <span>Unsaved changes</span>
@@ -503,6 +514,7 @@ export default function TripDetailPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
         </div>
       </motion.div>
 

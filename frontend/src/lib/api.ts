@@ -163,3 +163,27 @@ export interface Expense {
   date: string;
   description?: string;
 }
+
+export interface CreateExpensePayload {
+  category: string;
+  amount: number;
+  date: string;
+  description?: string;
+}
+
+export async function apiGetExpenses(tripId: string) {
+  return request<Expense[]>(`/trips/${tripId}/expenses`);
+}
+
+export async function apiCreateExpense(tripId: string, data: CreateExpensePayload) {
+  return request<Expense>(`/trips/${tripId}/expenses`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDeleteExpense(expenseId: string) {
+  return request<{ success: boolean }>(`/expenses/${expenseId}`, {
+    method: "DELETE",
+  });
+}

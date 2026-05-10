@@ -9,6 +9,7 @@ import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateTripPage from "./pages/CreateTripPage";
 import TripDetailPage from "./pages/TripDetailPage";
+import BudgetPage from "./pages/BudgetPage";
 import { getToken } from "./lib/api";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,14 @@ function App() {
           element={
             <ProtectedRoute>
               <TripDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trips/:tripId/budget"
+          element={
+            <ProtectedRoute>
+              <BudgetPage />
             </ProtectedRoute>
           }
         />

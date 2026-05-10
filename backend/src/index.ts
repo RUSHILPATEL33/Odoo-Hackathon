@@ -178,6 +178,53 @@ app.delete("/api/activities/:id", authenticateToken, async (req: any, res: any) 
   }
 });
 
+// --- EXPENSE ROUTES ---
+app.get("/api/trips/:tripId/expenses", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  try {
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, userId: req.user.userId } });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    const expenses = await prisma.expense.findMany({
+      where: { tripId },
+      orderBy: { date: "desc" },
+    });
+    res.json(expenses);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch expenses" });
+  }
+});
+
+app.post("/api/trips/:tripId/expenses", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  const { category, amount, date, description } = req.body;
+  try {
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, userId: req.user.userId } });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    const expense = await prisma.expense.create({
+      data: {
+        tripId,
+        category,
+        amount: Number(amount),
+        date: new Date(date),
+        description,
+      },
+    });
+    res.status(201).json(expense);
+  } catch {
+    res.status(500).json({ error: "Failed to create expense" });
+  }
+});
+
+app.delete("/api/expenses/:id", authenticateToken, async (req: any, res: any) => {
+  const { id } = req.params;
+  try {
+    await prisma.expense.delete({ where: { id } });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete expense" });
+  }
+});
+
 // Public Share Route
 app.get("/api/trips/public/:tripId", async (req: any, res: any): Promise<any> => {
   const { tripId } = req.params;
