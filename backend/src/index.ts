@@ -119,6 +119,20 @@ app.post("/api/trips", authenticateToken, async (req: any, res: any) => {
   }
 });
 
+app.patch("/api/trips/:id/public", authenticateToken, async (req: any, res: any): Promise<any> => {
+  const { id } = req.params;
+  const { isPublic } = req.body;
+  try {
+    const trip = await prisma.trip.update({
+      where: { id, userId: req.user.userId },
+      data: { isPublic: Boolean(isPublic) },
+    });
+    res.json(trip);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update trip visibility" });
+  }
+});
+
 // --- ACTIVITY ROUTES ---
 app.get("/api/trips/:tripId/activities", authenticateToken, async (req: any, res: any) => {
   const { tripId } = req.params;

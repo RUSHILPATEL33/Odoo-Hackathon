@@ -104,6 +104,17 @@ export async function apiGetTrip(tripId: string) {
   return request<Trip>(`/trips/${tripId}`);
 }
 
+export async function apiTogglePublic(tripId: string, isPublic: boolean) {
+  return request<Trip>(`/trips/${tripId}/public`, {
+    method: "PATCH",
+    body: JSON.stringify({ isPublic }),
+  });
+}
+
+export async function apiGetPublicTrip(tripId: string) {
+  return request<Trip>(`/trips/public/${tripId}`);
+}
+
 // --- Activities ---
 export interface CreateActivityPayload {
   dayIndex: number;

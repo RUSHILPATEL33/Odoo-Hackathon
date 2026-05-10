@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { apiGetTrips, type Trip } from "@/lib/api";
+import CurrencyConverter from "@/components/CurrencyConverter";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 24 },
@@ -155,21 +156,26 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <StatCard label="Total Trips" value={trips.length} icon={Plane} index={0} />
-        <StatCard
-          label="Destinations"
-          value={uniqueDestinations}
-          icon={Globe}
-          index={1}
-        />
-        <StatCard
-          label="Upcoming"
-          value={upcoming.length}
-          icon={TrendingUp}
-          index={2}
-        />
+      {/* Stats & Tools */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Total Trips" value={trips.length} icon={Plane} index={0} />
+          <StatCard
+            label="Destinations"
+            value={uniqueDestinations}
+            icon={Globe}
+            index={1}
+          />
+          <StatCard
+            label="Upcoming"
+            value={upcoming.length}
+            icon={TrendingUp}
+            index={2}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <CurrencyConverter />
+        </div>
       </div>
 
       {/* Upcoming trips */}

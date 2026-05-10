@@ -53,3 +53,12 @@ model Expense {
   date        DateTime
   description String?
 }
+
+model ChecklistItem {
+  id        String   @id @default(uuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title     String
+  completed Boolean  @default(false)
+  category  String?  // Optional: 'Packing', 'Documents', etc.
+}

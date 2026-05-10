@@ -33,6 +33,15 @@ const schema = z
   .refine((d) => new Date(d.endDate) >= new Date(d.startDate), {
     message: "End date must be after start date",
     path: ["endDate"],
+  })
+  .refine((d) => {
+    const start = new Date(d.startDate);
+    const end = new Date(d.endDate);
+    const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    return diff <= 90;
+  }, {
+    message: "Trip duration cannot exceed 90 days",
+    path: ["endDate"],
   });
 
 type FormValues = z.infer<typeof schema>;
