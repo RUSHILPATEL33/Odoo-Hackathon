@@ -35,6 +35,9 @@ import {
   Globe,
   Lock,
   AlertCircle,
+  CheckCircle2,
+  ListTodo,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -46,8 +49,14 @@ import {
   apiReorderActivities,
   apiDeleteActivity,
   apiTogglePublic,
+  apiDeleteTrip,
+  apiGetChecklist,
+  apiAddChecklistItem,
+  apiToggleChecklistItem,
+  apiDeleteChecklistItem,
   type Trip,
   type Activity,
+  type ChecklistItem,
   type CreateActivityPayload,
 } from "@/lib/api";
 
@@ -272,6 +281,12 @@ export default function TripDetailPage() {
   const [sharing, setSharing] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<"itinerary" | "checklist">("itinerary");
+
+  // Checklist state
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [checklistLoading, setChecklistLoading] = useState(false);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -284,19 +299,30 @@ export default function TripDetailPage() {
   // Load trip + activities
   useEffect(() => {
     if (!tripId) return;
-    Promise.all([apiGetTrip(tripId), apiGetActivities(tripId)])
-      .then(([t, acts]) => {
+    
+    // Fetch trip details first
+    apiGetTrip(tripId)
+      .then(t => {
         setTrip(t);
-        // Prefer local draft if exists
-        const draft = loadDraft(tripId);
-        if (draft) {
-          setActivities(draft);
-          setHasDraft(true);
-        } else {
-          setActivities(acts);
-        }
+        // Once trip is loaded, fetch sub-data
+        apiGetActivities(tripId).then(acts => {
+          const draft = loadDraft(tripId);
+          if (draft) {
+            setActivities(draft);
+            setHasDraft(true);
+          } else {
+            setActivities(acts);
+          }
+        }).catch(err => console.error("Activities load failed", err));
+
+        apiGetChecklist(tripId)
+          .then(setChecklist)
+          .catch(err => console.error("Checklist load failed", err));
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error("Trip load failed", err);
+        setTrip(null);
+      })
       .finally(() => setLoading(false));
   }, [tripId]);
 
@@ -442,11 +468,54 @@ export default function TripDetailPage() {
     }
   };
 
+  const handleDeleteTrip = async () => {
+    if (!tripId) return;
+    if (confirm("Are you sure you want to delete this entire trip? This action cannot be undone.")) {
+      try {
+        await apiDeleteTrip(tripId);
+        navigate("/dashboard");
+      } catch (e) {
+        console.error(e);
+        alert("Failed to delete trip.");
+      }
+    }
+  };
+
   const copyShareLink = () => {
     const url = `${window.location.origin}/shared/${tripId}`;
     navigator.clipboard.writeText(url);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const handleAddChecklistItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tripId || !newChecklistItem.trim()) return;
+    try {
+      const item = await apiAddChecklistItem(tripId, newChecklistItem.trim());
+      setChecklist([...checklist, item]);
+      setNewChecklistItem("");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleToggleChecklist = async (id: string) => {
+    try {
+      const updated = await apiToggleChecklistItem(id);
+      setChecklist(checklist.map((c) => (c.id === id ? updated : c)));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteChecklist = async (id: string) => {
+    try {
+      await apiDeleteChecklistItem(id);
+      setChecklist(checklist.filter((c) => c.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const activeActivity = activities.find((a) => a.id === activeId) ?? null;
@@ -524,6 +593,20 @@ export default function TripDetailPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all text-sm font-medium"
             >
               <BarChart2 className="w-4 h-4" /> Budget
+            </button>
+
+            <button
+              onClick={() => navigate(`/trips/${tripId}/invoice`)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all text-sm font-medium"
+            >
+              <FileText className="w-4 h-4" /> Billing
+            </button>
+
+            <button
+              onClick={handleDeleteTrip}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:bg-red-500/5 transition-all text-sm font-medium"
+            >
+              <Trash2 className="w-4 h-4" /> Delete
             </button>
 
             <div className="relative">
@@ -630,6 +713,35 @@ export default function TripDetailPage() {
         </div>
       </motion.div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-6 border-b border-white/5 mb-8">
+        <button
+          onClick={() => setActiveTab("itinerary")}
+          className={`pb-4 text-sm font-bold transition-all relative ${
+            activeTab === "itinerary" ? "text-white" : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          Itinerary
+          {activeTab === "itinerary" && (
+            <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("checklist")}
+          className={`pb-4 text-sm font-bold transition-all relative flex items-center gap-2 ${
+            activeTab === "checklist" ? "text-white" : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          Packing List
+          <span className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-white/30">
+            {checklist.length}
+          </span>
+          {activeTab === "checklist" && (
+            <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+          )}
+        </button>
+      </div>
+
       {/* Capped warning */}
       {isCapped && (
         <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm flex items-center gap-3">
@@ -640,47 +752,129 @@ export default function TripDetailPage() {
         </div>
       )}
 
-      {/* Itinerary builder */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <motion.div 
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-          className="flex flex-col gap-5"
-        >
-          {Array.from({ length: numDays }).map((_, dayIdx) => (
-            <DayColumn
-              key={dayIdx}
-              dayIndex={dayIdx}
-              dayDate={getDayDate(dayIdx)}
-              activities={getActivitiesForDay(dayIdx)}
-              onAddClick={(d) => {
-                setModalDayIndex(d);
-                setModalOpen(true);
-              }}
-              onDelete={handleDelete}
-              activeId={activeId}
-            />
-          ))}
-        </motion.div>
+      {/* Views */}
+      <AnimatePresence mode="wait">
+        {activeTab === "itinerary" ? (
+          <motion.div
+            key="itinerary"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+          >
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                className="flex flex-col gap-5"
+              >
+                {Array.from({ length: numDays }).map((_, dayIdx) => (
+                  <DayColumn
+                    key={dayIdx}
+                    dayIndex={dayIdx}
+                    dayDate={getDayDate(dayIdx)}
+                    activities={getActivitiesForDay(dayIdx)}
+                    onAddClick={(d) => {
+                      setModalDayIndex(d);
+                      setModalOpen(true);
+                    }}
+                    onDelete={handleDelete}
+                    activeId={activeId}
+                  />
+                ))}
+              </motion.div>
 
-        <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-          {activeActivity && <DragOverlayCard activity={activeActivity} />}
-        </DragOverlay>
-      </DndContext>
+              <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+                {activeActivity && <DragOverlayCard activity={activeActivity} />}
+              </DragOverlay>
+            </DndContext>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="checklist"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="max-w-2xl mx-auto w-full"
+          >
+            <div className="glass-card p-6 mb-8">
+              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                <ListTodo className="w-5 h-5 text-white/40" />
+                Packing & Prep Checklist
+              </h3>
+              <form onSubmit={handleAddChecklistItem} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Add item (e.g. Passport, Sunscreen...)"
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-white/30"
+                />
+                <Button type="submit" className="bg-white text-black hover:bg-white/90 rounded-xl px-6 h-10 font-bold">
+                  Add
+                </Button>
+              </form>
+            </div>
+
+            <div className="space-y-2">
+              {checklist.length === 0 && (
+                <div className="text-center py-20 text-white/20 border border-dashed border-white/10 rounded-3xl">
+                  Your checklist is empty.
+                </div>
+              )}
+              {checklist.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                    item.completed
+                      ? "bg-white/1 border-white/5 opacity-50"
+                      : "bg-white/3 border-white/10 hover:bg-white/5"
+                  }`}
+                >
+                  <button
+                    onClick={() => handleToggleChecklist(item.id)}
+                    className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                      item.completed
+                        ? "bg-emerald-500 border-emerald-500 text-black"
+                        : "border-white/20 hover:border-white/40"
+                    }`}
+                  >
+                    {item.completed && <CheckCircle2 className="w-4 h-4" />}
+                  </button>
+                  <span
+                    className={`flex-1 text-sm font-medium ${
+                      item.completed ? "line-through text-white/30" : "text-white"
+                    }`}
+                  >
+                    {item.title}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteChecklist(item.id)}
+                    className="text-white/10 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Empty state */}
       {numDays === 0 && (

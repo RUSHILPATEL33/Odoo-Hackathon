@@ -16,6 +16,8 @@ import DashboardLayout from "./components/DashboardLayout";
 import GlobalExpensesPage from "./pages/GlobalExpensesPage";
 import MyTripsPage from "./pages/MyTripsPage";
 import SettingsPage from "./pages/SettingsPage";
+import ExplorePage from "./pages/ExplorePage";
+import TripInvoicePage from "./pages/TripInvoicePage";
 import { getToken } from "./lib/api";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -36,6 +38,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
             </ProtectedRoute>
           }
         />

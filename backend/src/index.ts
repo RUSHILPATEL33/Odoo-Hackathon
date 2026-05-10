@@ -100,6 +100,16 @@ app.get("/api/trips/:id", authenticateToken, async (req: any, res: any): Promise
   }
 });
 
+app.delete("/api/trips/:id", authenticateToken, async (req: any, res: any) => {
+  const { id } = req.params;
+  try {
+    await prisma.trip.delete({ where: { id } });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete trip" });
+  }
+});
+
 app.post("/api/trips", authenticateToken, async (req: any, res: any) => {
   const { title, destination, startDate, endDate, budget } = req.body;
   try {
@@ -236,6 +246,58 @@ app.delete("/api/expenses/:id", authenticateToken, async (req: any, res: any) =>
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: "Failed to delete expense" });
+  }
+});
+
+// --- CHECKLIST ROUTES ---
+app.get("/api/trips/:tripId/checklist", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  try {
+    const checklist = await prisma.checklistItem.findMany({
+      where: { tripId },
+      orderBy: { title: "asc" },
+    });
+    res.json(checklist);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch checklist" });
+  }
+});
+
+app.post("/api/trips/:tripId/checklist", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  const { title, category } = req.body;
+  try {
+    const item = await prisma.checklistItem.create({
+      data: { tripId, title, category, completed: false },
+    });
+    res.status(201).json(item);
+  } catch {
+    res.status(500).json({ error: "Failed to create checklist item" });
+  }
+});
+
+app.patch("/api/checklist/:id/toggle", authenticateToken, async (req: any, res: any): Promise<any> => {
+  const { id } = req.params;
+  try {
+    const item = await prisma.checklistItem.findUnique({ where: { id } });
+    if (!item) return res.status(404).json({ error: "Item not found" });
+    const updated = await prisma.checklistItem.update({
+      where: { id },
+      data: { completed: !item.completed },
+    });
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "Failed to toggle checklist item" });
+  }
+});
+
+app.delete("/api/checklist/:id", authenticateToken, async (req: any, res: any) => {
+  const { id } = req.params;
+  try {
+    await prisma.checklistItem.delete({ where: { id } });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete checklist item" });
   }
 });
 

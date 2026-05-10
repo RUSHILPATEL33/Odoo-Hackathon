@@ -9,12 +9,14 @@ import {
   Menu,
   X,
   PlaneTakeoff,
+  Compass,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clearToken, getUser } from "@/lib/api";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Explore", path: "/explore", icon: Compass },
   { name: "My Trips", path: "/trips", icon: Plane },
   { name: "Expenses", path: "/expenses", icon: CreditCard },
   { name: "Settings", path: "/settings", icon: Settings },

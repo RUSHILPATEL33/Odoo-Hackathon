@@ -27,6 +27,7 @@ model Trip {
   isPublic    Boolean    @default(false)
   activities  Activity[]
   expenses    Expense[]
+  checklist   ChecklistItem[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }

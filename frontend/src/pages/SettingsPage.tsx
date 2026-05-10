@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -9,14 +9,26 @@ import {
   LogOut,
   Save,
   CheckCircle,
+  Plane,
+  Award,
+  History,
+  TrendingUp,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { getUser, clearToken } from "@/lib/api";
+import { getUser, clearToken, apiGetTrips, type Trip } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
   const user = getUser();
   const [saved, setSaved] = useState(false);
+  const [trips, setTrips] = useState<Trip[]>([]);
+
+  useEffect(() => {
+    apiGetTrips().then(setTrips).catch(console.error);
+  }, []);
+
+  const completed = trips.filter(t => new Date(t.endDate) < new Date()).length;
+  const upcoming = trips.filter(t => new Date(t.startDate) > new Date()).length;
 
   const handleSave = () => {
     setSaved(true);
@@ -54,6 +66,37 @@ export default function SettingsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
         <p className="text-white/40 text-sm mt-1">Manage your account and app preferences.</p>
+      </div>
+
+      {/* Stats Summary - New Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        <div className="glass-card p-5 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+            <Award className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Finished Trips</p>
+            <p className="text-xl font-black text-white">{completed}</p>
+          </div>
+        </div>
+        <div className="glass-card p-5 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+            <Plane className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Ongoing Trips</p>
+            <p className="text-xl font-black text-white">{trips.filter(t => new Date(t.startDate) <= new Date() && new Date(t.endDate) >= new Date()).length}</p>
+          </div>
+        </div>
+        <div className="glass-card p-5 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+            <TrendingUp className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-white/30 uppercase font-bold tracking-wider">Future Trips</p>
+            <p className="text-xl font-black text-white">{upcoming}</p>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8">

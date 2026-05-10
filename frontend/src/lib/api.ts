@@ -115,6 +115,12 @@ export async function apiGetPublicTrip(tripId: string) {
   return request<Trip>(`/trips/public/${tripId}`);
 }
 
+export async function apiDeleteTrip(tripId: string) {
+  return request<{ success: boolean }>(`/trips/${tripId}`, {
+    method: "DELETE",
+  });
+}
+
 // --- Activities ---
 export interface CreateActivityPayload {
   dayIndex: number;
@@ -195,6 +201,38 @@ export async function apiCreateExpense(tripId: string, data: CreateExpensePayloa
 
 export async function apiDeleteExpense(expenseId: string) {
   return request<{ success: boolean }>(`/expenses/${expenseId}`, {
+    method: "DELETE",
+  });
+}
+
+// --- Checklist ---
+export interface ChecklistItem {
+  id: string;
+  tripId: string;
+  title: string;
+  completed: boolean;
+  category?: string;
+}
+
+export async function apiGetChecklist(tripId: string) {
+  return request<ChecklistItem[]>(`/trips/${tripId}/checklist`);
+}
+
+export async function apiAddChecklistItem(tripId: string, title: string, category?: string) {
+  return request<ChecklistItem>(`/trips/${tripId}/checklist`, {
+    method: "POST",
+    body: JSON.stringify({ title, category }),
+  });
+}
+
+export async function apiToggleChecklistItem(id: string) {
+  return request<ChecklistItem>(`/checklist/${id}/toggle`, {
+    method: "PATCH",
+  });
+}
+
+export async function apiDeleteChecklistItem(id: string) {
+  return request<{ success: boolean }>(`/checklist/${id}`, {
     method: "DELETE",
   });
 }

@@ -74,22 +74,39 @@ export default function AuthPage() {
           <AnimatePresence>
             {!isLogin && (
               <motion.div
-                key="name-field"
+                key="reg-fields"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-2 overflow-hidden"
+                className="space-y-4 overflow-hidden"
               >
-                <Label htmlFor="name" className="text-white/70 text-sm">
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="John Doe"
-                  className={inputClass}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-white/70 text-xs">Full Name</Label>
+                    <Input id="name" name="name" placeholder="John Doe" className={inputClass} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="text-white/70 text-xs">User Name</Label>
+                    <Input id="username" name="username" placeholder="johndoe" className={inputClass} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-white/70 text-xs">Phone Number</Label>
+                    <Input id="phone" name="phone" placeholder="+1..." className={inputClass} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country" className="text-white/70 text-xs">Country</Label>
+                    <select id="country" name="country" className={`${inputClass} w-full px-3 py-2 text-sm appearance-none`}>
+                      <option value="IN" className="bg-zinc-900">India</option>
+                      <option value="US" className="bg-zinc-900">USA</option>
+                      <option value="UK" className="bg-zinc-900">UK</option>
+                      <option value="FR" className="bg-zinc-900">France</option>
+                    </select>
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -165,9 +165,9 @@ export default function MyTripsPage() {
         </div>
       ) : (
         <>
-          <Section title="Active Journeys" items={ongoing} />
-          <Section title="Upcoming Adventures" items={upcoming} />
-          <Section title="Past Memories" items={completed} />
+          <Section title="Ongoing" items={ongoing} />
+          <Section title="Upcoming" items={upcoming} />
+          <Section title="Finished" items={completed} />
         </>
       )}
     </DashboardLayout>
