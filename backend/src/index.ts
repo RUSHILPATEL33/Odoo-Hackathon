@@ -50,6 +50,7 @@ app.post("/api/auth/register", async (req: Request, res: Response): Promise<any>
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "24h" });
     return res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
+    console.error("Register Error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -66,6 +67,7 @@ app.post("/api/auth/login", async (req: Request, res: Response): Promise<any> =>
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "24h" });
     return res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
+    console.error("Login Error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
