@@ -76,10 +76,25 @@ app.get("/api/trips", authenticateToken, async (req: any, res: any) => {
     const trips = await prisma.trip.findMany({
       where: { userId: req.user.userId },
       include: { activities: true, expenses: true },
+      orderBy: { startDate: "asc" },
     });
     res.json(trips);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch trips" });
+  }
+});
+
+app.get("/api/trips/:id", authenticateToken, async (req: any, res: any): Promise<any> => {
+  const { id } = req.params;
+  try {
+    const trip = await prisma.trip.findFirst({
+      where: { id, userId: req.user.userId },
+      include: { activities: { orderBy: [{ dayIndex: "asc" }, { orderIndex: "asc" }] }, expenses: true },
+    });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    res.json(trip);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch trip" });
   }
 });
 
@@ -99,6 +114,65 @@ app.post("/api/trips", authenticateToken, async (req: any, res: any) => {
     res.status(201).json(trip);
   } catch (error) {
     res.status(500).json({ error: "Failed to create trip" });
+  }
+});
+
+// --- ACTIVITY ROUTES ---
+app.get("/api/trips/:tripId/activities", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  try {
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, userId: req.user.userId } });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    const activities = await prisma.activity.findMany({
+      where: { tripId },
+      orderBy: [{ dayIndex: "asc" }, { orderIndex: "asc" }],
+    });
+    res.json(activities);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch activities" });
+  }
+});
+
+app.post("/api/trips/:tripId/activities", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  const { dayIndex, orderIndex, title, description, cost, type, time } = req.body;
+  try {
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, userId: req.user.userId } });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    const activity = await prisma.activity.create({
+      data: { tripId, dayIndex, orderIndex, title, description, cost: Number(cost ?? 0), type, time },
+    });
+    res.status(201).json(activity);
+  } catch {
+    res.status(500).json({ error: "Failed to create activity" });
+  }
+});
+
+// Bulk reorder — accepts array of { id, dayIndex, orderIndex }
+app.patch("/api/trips/:tripId/activities/reorder", authenticateToken, async (req: any, res: any) => {
+  const { tripId } = req.params;
+  const items: { id: string; dayIndex: number; orderIndex: number }[] = req.body;
+  try {
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, userId: req.user.userId } });
+    if (!trip) return res.status(404).json({ error: "Trip not found" });
+    await Promise.all(
+      items.map(({ id, dayIndex, orderIndex }) =>
+        prisma.activity.update({ where: { id }, data: { dayIndex, orderIndex } })
+      )
+    );
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to reorder activities" });
+  }
+});
+
+app.delete("/api/activities/:id", authenticateToken, async (req: any, res: any) => {
+  const { id } = req.params;
+  try {
+    await prisma.activity.delete({ where: { id } });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: "Failed to delete activity" });
   }
 });
 
