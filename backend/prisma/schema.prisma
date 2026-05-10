@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String   // Hashed, if custom auth
+  trips     Trip[]
+  createdAt DateTime @default(now())
+}
+
+model Trip {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  title       String
+  destination String
+  startDate   DateTime
+  endDate     DateTime
+  budget      Float      @default(0)
+  isPublic    Boolean    @default(false)
+  activities  Activity[]
+  expenses    Expense[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  dayIndex    Int      // Which day of the trip (0, 1, 2...)
+  orderIndex  Int      // For drag-and-drop ordering
+  title       String
+  description String?
+  cost        Float    @default(0)
+  type        String   // e.g., 'Flight', 'Hotel', 'Food', 'Sightseeing'
+  time        String?  // e.g., '10:00 AM'
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  tripId      String
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  category    String   // e.g., 'Transportation', 'Accommodation', 'Food'
+  amount      Float
+  date        DateTime
+  description String?
+}
